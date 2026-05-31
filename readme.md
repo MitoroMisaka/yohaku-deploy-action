@@ -138,3 +138,5 @@ git checkout bc07cfa
 pm2 startup
 pm2 save
 ```
+test trigger deployment 2026年05月31日 12:34:15
+trigger

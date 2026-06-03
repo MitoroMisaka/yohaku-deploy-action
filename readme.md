@@ -42,10 +42,12 @@ sharp 不是必须的，但是在运行过程中会出现报错。参考：https
 
 ```
 # Env from your private Yohaku/Shiroi repo .env.template
-BASE_URL=
+BASE_URL=https://mitoromisaka.cn
 
-NEXT_PUBLIC_API_URL=
-NEXT_PUBLIC_GATEWAY_URL=
+API_URL=http://127.0.0.1:2333/api/v3
+NEXT_PUBLIC_API_URL=https://mitoromisaka.cn/api/v3
+NEXT_PUBLIC_CLIENT_API_URL=https://mitoromisaka.cn/api/v3
+NEXT_PUBLIC_GATEWAY_URL=https://mitoromisaka.cn
 
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
 
@@ -98,9 +100,9 @@ git checkout bc07cfa
 
 ## CI 构建与站点 URL 环境变量
 
-工作流在 GitHub Actions 里执行 `next build` 时，会通过仓库 **Secrets** 注入 `BASE_URL`、`NEXT_PUBLIC_API_URL` 与 `NEXT_PUBLIC_GATEWAY_URL`，须与服务器 `~/yohaku/.env`（及私有仓库 `Dockerfile` / 模板）一致。
+工作流在 GitHub Actions 里执行 `next build` 时，会通过仓库 **Secrets** 注入 `BASE_URL`、`NEXT_PUBLIC_API_URL` 与 `NEXT_PUBLIC_GATEWAY_URL`，须与服务器 `~/yohaku/.env`（及私有仓库 `Dockerfile` / 模板）一致。本部署使用正式域名，不再把公网 IP 写入前端构建变量。
 
-- **`BASE_URL`**：站点对外根 URL（无尾部斜杠为宜），例如 `https://example.com`。与私有镜像构建阶段一致：`Dockerfile` 中常用 `ARG BASE_URL`，并令 `NEXT_PUBLIC_GATEWAY_URL=${BASE_URL}`、`NEXT_PUBLIC_API_URL=${BASE_URL}/api/v2`。
+- **`BASE_URL`**：站点对外根 URL（无尾部斜杠为宜），当前为 `https://mitoromisaka.cn`。与私有镜像构建阶段一致：`Dockerfile` 中常用 `ARG BASE_URL`，并令 `NEXT_PUBLIC_GATEWAY_URL=${BASE_URL}`、`NEXT_PUBLIC_API_URL=${BASE_URL}/api/v3`。
 - **`NEXT_PUBLIC_*`**：直接参与 `next build` 与客户端 bundle；若启用 **ISR**，构建期/再验证会依赖正确端点，不能只依赖部署机 `.env` 而忽略 Actions。
 
 在仓库 **Settings → Secrets and variables → Actions** 中新增：
@@ -138,5 +140,4 @@ git checkout bc07cfa
 pm2 startup
 pm2 save
 ```
-test trigger deployment 2026年05月31日 12:34:15
-trigger
+domain deployment trigger 2026-06-03 mitoromisaka.cn

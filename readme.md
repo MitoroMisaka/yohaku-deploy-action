@@ -111,6 +111,71 @@ git checkout bc07cfa
 - `NEXT_PUBLIC_API_URL`
 - `NEXT_PUBLIC_GATEWAY_URL`
 
+## Nginx 反向代理要点
+
+正式域名部署时，Nginx 需要把前端、后端 API、Socket.IO 和 OAuth 回调分流到对应服务：
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name mitoromisaka.cn www.mitoromisaka.cn;
+
+    ssl_certificate     /etc/nginx/ssl/mitoromisaka.cn/mitoromisaka.cn_bundle.crt;
+    ssl_certificate_key /etc/nginx/ssl/mitoromisaka.cn/mitoromisaka.cn.key;
+
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/javascript application/javascript application/json application/xml application/rss+xml image/svg+xml;
+
+    location ^~ /auth/callback/ {
+        proxy_pass http://127.0.0.1:2333/api/v3/auth/callback/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /api/v3/ {
+        proxy_pass http://127.0.0.1:2333;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /socket.io/ {
+        proxy_pass http://127.0.0.1:2333;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:2323;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+第三方 OAuth 应用中的 Authorized callback URL 需要填写：
+
+- `https://mitoromisaka.cn/auth/callback/github`
+- `https://mitoromisaka.cn/auth/callback/google`
+
+前端登录成功后的完成页仍然是 `https://mitoromisaka.cn/auth/social-callback`，不要把该路径代理到后端。
+
 ## Secrets
 
 - `HOST` 服务器地址

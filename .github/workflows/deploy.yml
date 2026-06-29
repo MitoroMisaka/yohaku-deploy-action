@@ -205,19 +205,34 @@ jobs:
             source $HOME/.bashrc
             basedir=$HOME/yohaku
             workdir=$basedir/${{ github.run_number }}
+            preserve_dir=$basedir/.cache/preserved-public
             mkdir -p $workdir
             mkdir -p $basedir/.cache
+            mkdir -p $preserve_dir
+            if [ -d "$basedir/public" ]; then
+              for asset in yohaku-owner-avatar.png favicon-32x32.png favicon.ico favicon-16x16.png apple-touch-icon.png favicon-dark.ico android-chrome-192x192.png android-chrome-512x512.png; do
+                if [ -f "$basedir/public/$asset" ]; then
+                  cp -f "$basedir/public/$asset" "$preserve_dir/$asset"
+                fi
+              done
+            fi
             mv /tmp/yohaku/release.zip $workdir/release.zip
             install -m 644 /tmp/yohaku/ecosystem.config.js $basedir/ecosystem.config.js
             cd $workdir
             unzip -qq -o $workdir/release.zip
             rm -r /tmp/yohaku
+            echo "${{ needs.build.outputs.sha_short }}" > $workdir/SOURCE_COMMIT
+            for public_dir in "$workdir/standalone/public" "$workdir/${{ env.STANDALONE_SUBPATH }}/public"; do
+              mkdir -p "$public_dir"
+              cp -f "$preserve_dir"/* "$public_dir"/ 2>/dev/null || true
+            done
             rm -rf $workdir/${{ env.STANDALONE_SUBPATH }}/.env
             ln -s $HOME/yohaku/.env $workdir/${{ env.STANDALONE_SUBPATH }}/.env
             export NEXT_SHARP_PATH=$(npm root -g)/sharp
             # https://github.com/Unitech/pm2/issues/3054
             # symlink workdir node entry file to basedir
             ln -sf $workdir/${{ env.STANDALONE_SUBPATH }}/server.js $basedir/server.js
+            ln -sfn $workdir/standalone/public $basedir/public
             mkdir -p $workdir/${{ env.STANDALONE_SUBPATH }}/.next
             rm -rf $workdir/${{ env.STANDALONE_SUBPATH }}/.next/cache
             ln -sf $basedir/.cache $workdir/${{ env.STANDALONE_SUBPATH }}/.next/cache
